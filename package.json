@@ -6,6 +6,9 @@
   "engines": {
     "vscode": "^1.80.0"
   },
+  "files.associations": {
+    "*.il": "nil"
+  },
   "categories": [
     "Other"
   ],
@@ -15,15 +18,14 @@
   "main": "./out/extension.js",
   "contributes": {
     "languages": [{
-        "id": "illg",
-        "aliases": ["illg", "illg"],
-        "extensions": [""],
+        "id": "nil",
+        "extensions": ["*.il"],
         "configuration": "./language-configuration.json"
       }],
       "grammars": [{
-        "language": "illg",
-        "scopeName": "illg",
-        "path": "./syntaxes/illg.tmLanguage.json"
+        "language": "nil",
+        "scopeName": "source.il",
+        "path": "./syntaxes/il.tmLanguage.json"
       }],
     "commands": [
       {
@@ -38,7 +40,8 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "build:syntax": "ts-node src/typescript/GenerateTmLanguageFile.ts > ./syntaxes/il.tmLanguage.json"
   },
   "devDependencies": {
     "@types/vscode": "^1.80.0",

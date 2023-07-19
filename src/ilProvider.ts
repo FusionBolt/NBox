@@ -9,20 +9,6 @@ class NBoxContext {
 
 let ctx = new NBoxContext()
 
-// todo: maybe error in windows
-function nncaseRoot(path: string) {
-    var list = path.split("/")
-    var index = list.indexOf("tests_output")
-    if(index == -1) {
-        return null
-    }
-    return list.slice(0, index).join("/")
-}
-
-function gotoTest() {
-    
-}
-
 class ILDocumentSymbolProvider implements DocumentSymbolProvider {
     provideDocumentSymbols(document: TextDocument, token: CancellationToken): ProviderResult<SymbolInformation[] | DocumentSymbol[]> {
         console.log("provideDocumentSymbols1")
@@ -111,7 +97,7 @@ class ILHoverProvier implements HoverProvider {
 
 export function registProvider(extCtx: ExtensionContext) {
     console.log("register")
-    let documentSelector = [{ scheme: 'file', language: 'plaintext' }]
+    let documentSelector = ['nil']
     extCtx.subscriptions.push(languages.registerDocumentSymbolProvider(documentSelector, new ILDocumentSymbolProvider()))
     extCtx.subscriptions.push(languages.registerDefinitionProvider(documentSelector, new ILDefinitionProvider()))
     extCtx.subscriptions.push(languages.registerReferenceProvider(documentSelector, new ILReferenceProvider()))
