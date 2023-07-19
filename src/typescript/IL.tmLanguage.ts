@@ -13,17 +13,12 @@ export const ilTmLanguage: TmLanguage = {
         keywords: {
             patterns: [
                 {
-                    match: '\\b(const|fn|RangeOf|fusion|stackvm|k[0-9]{3})\\b',
-                    name: 'keyword.declaration.const'
-                },
-                {
-                    begin: " ",
-                    match: '\\b[A-Z][A-Za-z]*\\b',
-                    name: 'entity.name.function'
+                    match: '\\b(@|const|fn|RangeOf|fusion|stackvm|k[0-9]{3})\\b',
+                    name: 'keyword.declaration.const.il'
                 },
                 {
                     match: '\\b(i|u|f)(8|16|32|64)\\b',
-                    name: 'support.type.primitive'
+                    name: 'support.type.primitive.il'
                 },
             ]
         },
@@ -35,12 +30,17 @@ export const ilTmLanguage: TmLanguage = {
                 }
             ]
         },
-        variable: {
+        local: {
             patterns: [
                 {
                     match: '%[0-9a-zA-Z_]+',
-                    name: 'variable.other.object.property'
-                }
+                    name: 'meta.definition.variable.il'
+                },
+                {
+                    begin: " ",
+                    match: '\\b[A-Z][A-Za-z]*\\b',
+                    name: 'entity.name.function.il'
+                },
             ]
         },
         constants: {
@@ -72,7 +72,7 @@ export const ilTmLanguage: TmLanguage = {
                     include: '#strings'
                 },
                 {
-                    include: '#variable'
+                    include: '#local'
                 },
                 {
                     include: '#constants'
