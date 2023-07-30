@@ -50,7 +50,9 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "build:syntax": "ts-node src/typescript/GenerateTmLanguageFile.ts > ./syntaxes/il.tmLanguage.json"
+    "build:syntax": "ts-node src/typescript/GenerateTmLanguageFile.ts > ./syntaxes/il.tmLanguage.json",
+    "package": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/vscode": "^1.80.0",

@@ -1,12 +1,20 @@
 import { Uri } from "vscode"
 import * as vscode from 'vscode'
 import * as fs from 'fs';
+import exp = require("constants");
 
 type Position = { line: number, charactar: number }
 type Range = { begin: Position, end: Position }
 export type Expr = Local | Operand
 export type Local = { name: string, define: string, children: Operand[], range: Range }
+export type Function = { name: string, define: string, locals: (Local | Function)[], range: Range, vars: string[]}
+
 export type Operand = { name: string, pos: Position }
+
+export function getType(local: Local) {
+    let list = local.define.split("//")
+    return list[list.length - 1].trim()
+}
 
 export function toVSPosition(pos: Position) {
     return new vscode.Position(
@@ -20,6 +28,25 @@ export function toVSRange(range: Range) {
         toVSPosition(range.begin),
         toVSPosition(range.end),
     )
+}
+
+export function defaultFunction(): Function {
+    return {
+        name: "empty",
+        define: "empty",
+        locals: [],
+        range: {
+            begin: {
+                line: 0,
+                charactar: 0
+            },
+            end: {
+                line: 0,
+                charactar: 0
+            }
+        },
+        vars: []
+    }
 }
 
 function defualtRange(): Range {
@@ -53,7 +80,6 @@ class ParseCtxt {
         }
         return result!
     }
-    
 
     // get function info
     private findMatch(lines: string[]) {
@@ -75,26 +101,43 @@ class ParseCtxt {
     }
 }
 
-export function parseFromUri(uri: Uri): Local[] {
+export function parseFromUri(uri: Uri): Function {
     var content = fs.readFileSync(uri.fsPath).toString()
     return parseSrc(content)
 }
 
-export function parseSrc(content: string): Local[] {
+export function parseSrc(content: string): Function {
     var lines = content.split("\n")
     var n = lines.length
     let ctx = new ParseCtxt(lines)
-    if(lines[0].includes("->")) {
-        var fn = parseFunBody(lines, 0, n,  ctx, true)
-        var body = parseFunBody(lines, 0 + 2, n - 2, ctx, false)
-        return fn.concat(body)
-    } else {
-        return parseFunBody(lines, 0, n, ctx, false)
+    let body = parseFunBody(lines, 0, n, ctx)
+    let funs = body.filter((l): l is Function => {
+        return true;
+    })
+    if(funs.length == 1) {
+        return funs[0]
     }
+    let f: Function = {
+        name: "empty",
+        define: content,
+        locals: body,
+        range: {
+            begin: {
+                line: 0,
+                charactar: 0
+            },
+            end: {
+                line: n,
+                charactar: lines[lines.length - 1].length
+            }
+        },
+        vars: []
+    }
+    return f
 }
 
 // todo: 没有处理{ 和 }
-function parseFunBody(lines: string[], i: number, end: number, ctx: ParseCtxt, once: boolean): Local[] {
+function parseFunBody(lines: string[], i: number, end: number, ctx: ParseCtxt): (Local | Function)[] {
     var data = []
     // 1. il is one method
     // 2. il is expr
@@ -118,9 +161,6 @@ function parseFunBody(lines: string[], i: number, end: number, ctx: ParseCtxt, o
             },
         }
         data.push(expr)
-        if(once) {
-            return data
-        }
     }
     return data
 }
@@ -160,19 +200,21 @@ function parseCall(lines: string[], i: number, ctxt: ParseCtxt): [Local, number]
 }
 
 // return new line and function
-function parseFunction(lines: string[], i: number, ctxt: ParseCtxt): [Local, number] {
+function parseFunction(lines: string[], i: number, ctxt: ParseCtxt): [Function, number] {
     let line = lines[i]
     let data = line.split("=")
     let name = data[0].trim()
     let decl = data[1]
-    let vars = findMatches(decl)
+    let vars = findMatches(decl).map(x => x[0])
     let close = ctxt.getMatchPair(i + 1)
     let define = lines.slice(i, close).join("\n")
-    let f: Local = {
+    let locals = parseFunBody(lines, i + 2, close, ctxt)
+    let f: Function = {
         name: name,
         define: define,
-        children: [],
-        range: defualtRange()
+        locals: locals,
+        range: defualtRange(),
+        vars: vars
     }
     return [f, close + 1]
 }
