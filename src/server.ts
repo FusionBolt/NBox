@@ -69,7 +69,7 @@ import {
     }
     if (hasWorkspaceFolderCapability) {
       connection.workspace.onDidChangeWorkspaceFolders(_event => {
-        connection.console.log('Workspace folder change event received.');
+        // connection.console.log('Workspace folder change event received.');
       });
     }
   });
@@ -177,7 +177,7 @@ import {
   
   connection.onDidChangeWatchedFiles(_change => {
     // Monitored files have change in VS Code
-    connection.console.log('We received a file change event');
+    // connection.console.log('We received a file change event');
   });
   
   // This handler provides the initial list of the completion items.

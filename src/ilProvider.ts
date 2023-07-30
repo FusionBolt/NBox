@@ -11,7 +11,6 @@ let ctx = new NBoxContext()
 
 class ILDocumentSymbolProvider implements DocumentSymbolProvider {
     provideDocumentSymbols(document: TextDocument, token: CancellationToken): ProviderResult<SymbolInformation[] | DocumentSymbol[]> {
-        console.log("provideDocumentSymbols1")
         let uri = document.uri
         ctx.data = parseFromUri(uri)
         let diagnostics = ctx.data.filter(line => line.define.split("\n").length <= 1 && line.define.includes("invalid")).map(local =>  {
@@ -63,22 +62,18 @@ function findUsers(expr: Expr): Local[] {
 
 class ILDefinitionProvider implements DefinitionProvider {
     provideDefinition(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<Definition | LocationLink[]> {
-        console.log("def")
         let uri = document.uri
         let expr = findExprByPos(position)
-        console.log(expr)
         let parent = findLocalById(expr.name)
-        console.log(parent)
         return new Location(uri, toVSRange(parent.range))
     }
 }
 
 class ILReferenceProvider implements ReferenceProvider {
     provideReferences(document: TextDocument, position: Position, context: ReferenceContext, token: CancellationToken): ProviderResult<Location[]> {
-        console.log("provideReferences")
         let uri = document.uri
         let expr = findLocal(position.line)
-        console.log(expr)
+        // console.log(expr)
         let users = findUsers(expr)
         return users.map(expr => new Location(uri, toVSRange(expr.range)))
     }
@@ -86,17 +81,15 @@ class ILReferenceProvider implements ReferenceProvider {
 
 class ILHoverProvier implements HoverProvider {
     provideHover(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<Hover> {
-        console.log("provideHover")
         let expr = findExprByPos(position)
         let users = findUsers(expr)
         let str = `name:${expr.name} users: ${users.length} ${users.map(user => user.name).join(" ")}`
-        console.log(expr)
+        // console.log(expr)
         return new Hover(MarkedString.fromPlainText(str))
     }
 }
 
 export function registProvider(extCtx: ExtensionContext) {
-    console.log("register")
     let documentSelector = ['nil']
     extCtx.subscriptions.push(languages.registerDocumentSymbolProvider(documentSelector, new ILDocumentSymbolProvider()))
     extCtx.subscriptions.push(languages.registerDefinitionProvider(documentSelector, new ILDefinitionProvider()))

@@ -47,8 +47,13 @@ class ParseCtxt {
     }
 
     getMatchPair(line: number): number {
-        return this.matchInfo.get(line)!
+        var result = this.matchInfo.get(line)
+        if(result == undefined) {
+            return -1
+        }
+        return result!
     }
+    
 
     // get function info
     private findMatch(lines: string[]) {

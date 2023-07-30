@@ -19,9 +19,6 @@ let client: LanguageClient;
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "nbox" is now active!');
 	// The server is implemented in node
 	let serverModule = context.asAbsolutePath(path.join('out', 'server.js'));
 	// The debug options for the server
