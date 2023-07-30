@@ -1,18 +1,20 @@
 import { DocumentSymbolProvider, TextDocument, CancellationToken, ProviderResult, SymbolInformation, DocumentSymbol, DefinitionProvider, Position, Definition, LocationLink, ReferenceProvider, ReferenceContext, Location, HoverProvider, Hover, ExtensionContext, languages, Diagnostic, workspace, Uri } from "vscode"
-import { Expr, Local, Operand, parseFromUri, parseSrc, toVSRange, defaultFunction, getType } from "./ilparser"
+import { Expr, Local, Operand, Var, parseFromUri, parseSrc, toVSRange, defaultFunction, getType } from "./ilparser"
 import { MarkedString, SymbolKind } from "vscode-languageclient"
+import exp = require("constants")
 
 class NBoxContext {
     fun = defaultFunction()
     data: Local[] = []
     diagnosticCollection = languages.createDiagnosticCollection('il')
     map: Map<string, Local> = new Map()
-    findLocal(line: number): Local {
-        return ctx.data.find(expr => expr.range.begin.line == line)!
+    varMap: Map<string, Var> = new Map()
+    findLocal(line: number): Local | undefined {
+        return ctx.data.find(expr => expr.range.begin.line == line)
     }
 
     findExprByPos(position: Position): Expr {
-        let local = this.findLocal(position.line)
+        let local = this.findLocal(position.line)!
         let posC = position.character
         let localC = local.range.begin.charactar
         if(inSpan(localC, posC, localC + local.name.length)) {
@@ -31,12 +33,28 @@ class NBoxContext {
     
     findUsers(expr: Expr): Local[] {
         return ctx.data.filter(e => {
+            if(e.children == undefined) {
+                return false
+            }
             var a = e.children.length != 0 
             var b = e.children.find(operand => {
                 return operand.name == expr.name
             })
             return a && (b != undefined)
         })
+    }
+
+    findParam(id: string): Var | undefined {
+        return this.varMap.get(id)
+    }
+
+    findParamByCharacter(c: number): Var | undefined {
+        let result = this.fun.vars.filter(v => inSpan(v.range.begin.charactar, c, v.range.end.charactar))
+        if(result.length == 0) {
+            return undefined
+        } else {
+            return result[0]
+        } 
     }
 }
 
@@ -59,24 +77,47 @@ class ILDocumentSymbolProvider implements DocumentSymbolProvider {
     }
 }
 
-function inSpan(a: number, x: number, b: number) {
-    return (a <= x) && (x <= b)
+function inSpan(start: number, pos: number, end: number) {
+    return (start <= pos) && (pos <= end)
 }
 
 class ILDefinitionProvider implements DefinitionProvider {
     provideDefinition(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<Definition | LocationLink[]> {
         let uri = document.uri
         let expr = ctx.findExprByPos(position)
-        let parent = ctx.findLocalById(expr.name)!
-        return new Location(uri, toVSRange(parent.range))
+        let exprId = expr.name
+        let parent = ctx.findLocalById(exprId)
+        if(parent == undefined) {
+            let param = ctx.findParam(exprId)
+            if(param != undefined) {
+                return new Location(uri, toVSRange(param.range))
+            } else {
+                return null
+            }
+        } else {
+            return new Location(uri, toVSRange(parent.range))
+        }
     }
 }
 
 class ILReferenceProvider implements ReferenceProvider {
     provideReferences(document: TextDocument, position: Position, context: ReferenceContext, token: CancellationToken): ProviderResult<Location[]> {
         let uri = document.uri
-        let expr = ctx.findLocal(position.line)
+        let expr: Expr | undefined = ctx.findLocal(position.line)
         // console.log(expr)
+        if(expr == undefined) {
+            if(position.line == ctx.fun.range.begin.line) {
+                // find param
+                let v = ctx.findParamByCharacter(position.character)
+                if(v == undefined) {
+                    return null
+                } else {
+                    expr = v
+                }
+            } else {
+                return null
+            }
+        }
         let users = ctx.findUsers(expr)
         return users.map(expr => new Location(uri, toVSRange(expr.range)))
     }
@@ -113,6 +154,7 @@ function initDocumentInfo(uri: Uri) {
     })
     ctx.data = data
     ctx.map = new Map(data.map(item => [item.name, item]))
+    ctx.varMap = new Map(ctx.fun.vars.map(v => [v.name, v]))
 }
 
 export function registProvider(extCtx: ExtensionContext) {

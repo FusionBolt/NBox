@@ -5,10 +5,10 @@ import exp = require("constants");
 
 type Position = { line: number, charactar: number }
 type Range = { begin: Position, end: Position }
-export type Expr = Local | Operand
+export type Expr = Local | Operand | Var
 export type Local = { name: string, define: string, children: Operand[], range: Range }
-export type Function = { name: string, define: string, locals: (Local | Function)[], range: Range, vars: string[]}
-
+export type Function = { name: string, define: string, locals: (Local | Function)[], range: Range, vars: Var[]}
+export type Var = { name: string, type: string, range: Range }
 export type Operand = { name: string, pos: Position }
 
 export function getType(local: Local) {
@@ -205,7 +205,30 @@ function parseFunction(lines: string[], i: number, ctxt: ParseCtxt): [Function, 
     let data = line.split("=")
     let name = data[0].trim()
     let decl = data[1]
-    let vars = findMatches(decl).map(x => x[0])
+    let vars = findMatches(decl).map(x => {
+        let index: number = data[0].length + x.index
+        let end = index + x[0].length
+        var splitData = x.input.slice(end).split("],")
+        if(splitData.length == 0) {
+            splitData = x.input.slice(end).split(")")
+        }
+        let type = (splitData[0] + "]").trim()
+        let v: Var = {
+            name: x[0],
+            type: type,
+            range: {
+                begin: {
+                    line: i,
+                    charactar: index
+                },
+                end: {
+                    line: i,
+                    charactar: end
+                }
+            }
+        }
+        return v
+    })
     let close = ctxt.getMatchPair(i + 1)
     let define = lines.slice(i, close).join("\n")
     let locals = parseFunBody(lines, i + 2, close, ctxt)
