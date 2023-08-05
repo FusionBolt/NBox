@@ -13,8 +13,12 @@ class NBoxContext {
         return ctx.data.find(expr => expr.range.begin.line == line)
     }
 
-    findExprByPos(position: Position): Expr {
-        let local = this.findLocal(position.line)!
+    findExprByPos(position: Position): Expr | undefined {
+        let local = this.findLocal(position.line)
+        if(local == undefined)
+        {
+            return undefined
+        }
         let posC = position.character
         let localC = local.range.begin.charactar
         if(inSpan(localC, posC, localC + local.name.length)) {
@@ -85,6 +89,9 @@ class ILDefinitionProvider implements DefinitionProvider {
     provideDefinition(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<Definition | LocationLink[]> {
         let uri = document.uri
         let expr = ctx.findExprByPos(position)
+        if(expr == undefined) {
+            return null
+        }
         let exprId = expr.name
         let parent = ctx.findLocalById(exprId)
         if(parent == undefined) {
@@ -126,6 +133,10 @@ class ILReferenceProvider implements ReferenceProvider {
 class ILHoverProvier implements HoverProvider {
     provideHover(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<Hover> {
         let expr = ctx.findExprByPos(position)
+        if(expr == undefined)
+        {
+            return null
+        }
         let users = ctx.findUsers(expr)
         var typeinfo = "" 
         // local

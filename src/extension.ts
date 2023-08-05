@@ -54,17 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
 		clientOptions
 	);
 
-	let disposable = vscode.commands.registerCommand('nbox.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World!');
-	});
-
 	registProvider(context)
-	// register(context)
-	context.subscriptions.push(disposable);
-
 	// Start the client. This will also launch the server
 	client.start();
 }

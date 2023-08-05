@@ -78,7 +78,7 @@ class ParseCtxt {
         if(result == undefined) {
             return -1
         }
-        return result!
+        return result
     }
 
     // get function info
