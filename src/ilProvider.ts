@@ -3,7 +3,7 @@ import { Expr, Local, Operand, Var, parseFromUri, parseSrc, toVSRange, defaultFu
 import { MarkedString, SymbolKind } from "vscode-languageclient"
 import exp = require("constants")
 
-class NBoxContext {
+class NNBoxContext {
     fun = defaultFunction()
     data: Local[] = []
     diagnosticCollection = languages.createDiagnosticCollection('il')
@@ -62,7 +62,7 @@ class NBoxContext {
     }
 }
 
-let ctx = new NBoxContext()
+let ctx = new NNBoxContext()
 
 class ILDocumentSymbolProvider implements DocumentSymbolProvider {
     provideDocumentSymbols(document: TextDocument, token: CancellationToken): ProviderResult<SymbolInformation[] | DocumentSymbol[]> {
