@@ -18,7 +18,6 @@ let client: LanguageClient;
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-
 	// The server is implemented in node
 	let serverModule = context.asAbsolutePath(path.join('out', 'server.js'));
 	// The debug options for the server
@@ -39,7 +38,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// Options to control the language client
 	let clientOptions: LanguageClientOptions = {
 		// Register the server for plain text documents
-		documentSelector: ['nil'],
+		documentSelector: [{scheme: 'file', language: 'nil'}],
 		synchronize: {
 			// Notify the server about file changes to '.clientrc files contained in the workspace
 			fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
@@ -48,8 +47,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Create the language client and start the client.
 	client = new LanguageClient(
-		'nbox',
-		'nbox',
+		'NNBox',
+		'NNBox',
 		serverOptions,
 		clientOptions
 	);

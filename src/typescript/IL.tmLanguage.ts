@@ -13,7 +13,7 @@ export const ilTmLanguage: TmLanguage = {
         keywords: {
             patterns: [
                 {
-                    match: '\\b(@|const|fn|RangeOf|fusion|stackvm|k[0-9]{3})\\b',
+                    match: '\\b(@|const|fn|if|else|RangeOf|fusion|stackvm|k[0-9]{3})\\b',
                     name: 'keyword.declaration.const.il'
                 },
                 {
@@ -38,7 +38,7 @@ export const ilTmLanguage: TmLanguage = {
                 },
                 {
                     begin: " ",
-                    match: '\\b[A-Z][A-Za-z]*\\b',
+                    match: '\\b[A-Z][A-Za-z1-9_]*\\b',
                     name: 'entity.name.function.il'
                 },
             ]
