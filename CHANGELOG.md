@@ -7,3 +7,21 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## [Unreleased]
 
 - Initial release
+
+## 0.0.3
+
+### Added
+
+goto relative test for il in tests_output dir(icon in editor/title navigation)
+
+run dotnet test for il in tests_output dir(icon in editor/title navigation)
+
+goto result file in order(out_shape_list), implment by goto definition
+
+add icon for goto nncase github(icon in editor/title navigation)
+
+configuration for nncaseRootDir, kpuRootDir gotoCommand
+
+### Fixed
+
+fix var hover
