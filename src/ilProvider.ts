@@ -1,12 +1,12 @@
 import { DocumentSymbolProvider, TextDocument, CancellationToken, ProviderResult, SymbolInformation, DocumentSymbol, DefinitionProvider, Position, Definition, LocationLink, ReferenceProvider, ReferenceContext, Location, HoverProvider, Hover, ExtensionContext, languages, Diagnostic, workspace, Uri } from "vscode"
-import { Expr, Local, Operand, Var, parseFromUri, parseSrc, toVSRange, defaultFunction, getType } from "./ilparser"
+import { Expr, Local, Operand, Var, parseFromUri, parseSrc, toVSRange, defaultFunction, getType } from "./ilParser"
 import { MarkedString, SymbolKind } from "vscode-languageclient"
 import exp = require("constants")
 
 class NNBoxContext {
     fun = defaultFunction()
     data: Local[] = []
-    diagnosticCollection = languages.createDiagnosticCollection('il')
+    diagnosticCollection = languages.createDiagnosticCollection('nil')
     map: Map<string, Local> = new Map()
     varMap: Map<string, Var> = new Map()
     findLocal(line: number): Local | undefined {
@@ -67,7 +67,9 @@ let ctx = new NNBoxContext()
 class ILDocumentSymbolProvider implements DocumentSymbolProvider {
     provideDocumentSymbols(document: TextDocument, token: CancellationToken): ProviderResult<SymbolInformation[] | DocumentSymbol[]> {
         let uri = document.uri
-        initDocumentInfo(uri)
+        if(ctx.data.length == 0) {
+            initDocumentInfo(uri)
+        }
         let diagnostics = ctx.data.filter(line => line.define.split("\n").length <= 1 && line.define.includes("invalid")).map(local =>  {
             let s = "invalid:"
             let i = local.define.indexOf(s)
@@ -150,6 +152,11 @@ class ILHoverProvier implements HoverProvider {
             let operand = ctx.findLocalById(expr.name)
             if(operand != undefined) {
                 typeinfo = getType(operand)
+            } else{ 
+                let param = ctx.findParam(expr.name)
+                if(param != undefined) {
+                    typeinfo = param.type
+                }
             }
         }
         let str = `${expr.name} ${typeinfo} users: ${users.length} ${users.map(user => user.name).join(" ")}`
@@ -175,6 +182,17 @@ export function registILProvider(extCtx: ExtensionContext) {
     extCtx.subscriptions.push(languages.registerReferenceProvider(documentSelector, new ILReferenceProvider()))
     extCtx.subscriptions.push(languages.registerHoverProvider(documentSelector, new ILHoverProvier()))
     extCtx.subscriptions.push(ctx.diagnosticCollection)
-    // extCtx.subscriptions.push(workspace.onDidOpenTextDocument(initDocumentInfo))
+    extCtx.subscriptions.push(workspace.onDidCloseTextDocument(_ => {
+        ctx.diagnosticCollection.clear()
+    }))
+    extCtx.subscriptions.push(workspace.onDidDeleteFiles(_ => {
+        ctx.diagnosticCollection.clear()
+    }))
+    extCtx.subscriptions.push(workspace.onDidOpenTextDocument(doc => {
+        initDocumentInfo(doc.uri)
+    }))
+    extCtx.subscriptions.push(workspace.onDidSaveTextDocument(doc => {
+        initDocumentInfo(doc.uri)
+    }))
 }
 

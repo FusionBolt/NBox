@@ -205,25 +205,32 @@ function parseFunction(lines: string[], i: number, ctxt: ParseCtxt): [Function, 
     let data = line.split("=")
     let name = data[0].trim()
     let decl = data[1]
+    // todo: fix parse var
     let vars = findMatches(decl).map(x => {
-        let index: number = data[0].length + x.index
+        let index: number = x.index
         let end = index + x[0].length
-        var splitData = x.input.slice(end).split("],")
+        // fn(xxxx): // input -> ret
+        // : type)
+        // : type, xx : type
+        // : (tup0, tup1),
+        // : (tup0, tup1))
+        var splitData = x.input.slice(end).split("): ")[0].split("],")
         if(splitData.length == 0) {
             splitData = x.input.slice(end).split(")")
         }
-        let type = (splitData[0] + "]").trim()
+        let offset = data[0].length + 1
+        let type = (splitData.length == 1 ? splitData[0] : splitData[0] + "]").trim()
         let v: Var = {
             name: x[0],
             type: type,
             range: {
                 begin: {
                     line: i,
-                    charactar: index
+                    charactar: offset + index
                 },
                 end: {
                     line: i,
-                    charactar: end
+                    charactar: offset + end
                 }
             }
         }
