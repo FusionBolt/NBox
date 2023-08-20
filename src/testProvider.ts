@@ -23,10 +23,10 @@ function getPathInfo(filepath: string) {
 }
 
 
-function getNncaseRoot() {
+function getNncaseRoot(defaultRoot: string) {
     let nnboxConfig = vscode.workspace.getConfiguration('NNBox')
     let r = nnboxConfig.get<string>("nncaseRootDir")
-    return r == undefined ? "" : r
+    return (r == "" || r == undefined) ? defaultRoot : r
 }
 
 function getCustomCommand() {
@@ -35,14 +35,20 @@ function getCustomCommand() {
     return r == undefined ? "" : r
 }
 
+function getKPURoot(defaultRoot: string) {
+    let nnboxConfig = vscode.workspace.getConfiguration('NNBox')
+    let r = nnboxConfig.get<string>("kpuRootDir")
+    return (r == "" || r == undefined) ? defaultRoot : r
+}
+
 function parseTest(path: string) {
-    var nncaseRoot = getNncaseRoot()
     let data = path.split("/")
     let beginIndex = data.indexOf("tests_output")
     let testClass = data[beginIndex + 1]
     let testMethod = data[beginIndex + 2]
     let searchRoot = data.slice(0, beginIndex).join("/")
-    return [testClass, testMethod, nncaseRoot == "" ? searchRoot : nncaseRoot]
+    var nncaseRoot = getNncaseRoot(searchRoot)
+    return [testClass, testMethod, nncaseRoot]
 }
 
 
@@ -66,9 +72,20 @@ export function registTestProvider(context: ExtensionContext, client: LanguageCl
         let fileList = lookup(path.join(root, "src", "Nncase.Tests"), s => {
             return s == `${testClass}.cs`
         })
+
+        // todo: always search two path
         if(fileList.length == 0) {
-            window.showWarningMessage(`Class Not Found ${testClass}`)
-            return undefined
+            var nncaseParent = path.dirname(root)
+            var kpuRoot = getKPURoot(path.join(nncaseParent, "k510-gnne-compiler"))
+            var kpuPath = path.join(kpuRoot, "tests")
+            let kpuFileList = lookup(kpuPath, s => {
+                return s == `${testClass}.cs`
+            })
+            if(kpuFileList.length == 0) {
+                window.showWarningMessage(`Class Not Found ${testClass}`)
+                return undefined
+            }
+            fileList = kpuFileList
         }
         
         if(fileList.length > 1) {
