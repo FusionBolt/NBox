@@ -168,7 +168,7 @@ function initDocumentInfo(uri: Uri) {
     ctx.varMap = new Map(ctx.fun.vars.map(v => [v.name, v]))
 }
 
-export function registProvider(extCtx: ExtensionContext) {
+export function registILProvider(extCtx: ExtensionContext) {
     let documentSelector = ['nil']
     extCtx.subscriptions.push(languages.registerDocumentSymbolProvider(documentSelector, new ILDocumentSymbolProvider()))
     extCtx.subscriptions.push(languages.registerDefinitionProvider(documentSelector, new ILDefinitionProvider()))

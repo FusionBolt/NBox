@@ -10,7 +10,9 @@ import {
 	ServerOptions,
 	TransportKind
 } from 'vscode-languageclient/node';
-import { registProvider } from './ilProvider';
+import { registILProvider } from './ilProvider';
+import { registTestProvider } from './testProvider';
+import { registOrderProvider } from './orderProvider';
 
 let client: LanguageClient;
 
@@ -53,7 +55,9 @@ export function activate(context: vscode.ExtensionContext) {
 		clientOptions
 	);
 
-	registProvider(context)
+	registILProvider(context)
+	registOrderProvider(context)
+	registTestProvider(context, client)
 	// Start the client. This will also launch the server
 	client.start();
 }
