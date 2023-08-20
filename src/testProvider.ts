@@ -3,7 +3,7 @@
 // 1. check current il is in test
 // 2. show icon to run
 
-import { ExtensionContext, Range, Uri, commands, window, workspace } from "vscode";
+import { ExtensionContext, Range, Uri, WorkspaceConfiguration, commands, window, workspace } from "vscode";
 import * as vscode from "vscode";
 import { LanguageClient } from "vscode-languageclient/node";
 import { getVSCodeDownloadUrl } from "@vscode/test-electron/out/util";
@@ -14,22 +14,37 @@ function isInTest(path: string) {
     return path.includes("tests_output")
 }
 
-function getPathInfo(uri: Uri) {
+function getPathInfo(filepath: string) {
     // todo: nncase test and 510 test, add config in settings.json
-    let filepath: string = uri.path
     if(!isInTest(filepath)) {
         return undefined
     }
     return parseTest(filepath)
 }
 
+
+function getNncaseRoot() {
+    let nnboxConfig = vscode.workspace.getConfiguration('NNBox')
+    let r = nnboxConfig.get<string>("nncaseRootDir")
+    return r == undefined ? "" : r
+}
+
+function getCustomCommand() {
+    let nnboxConfig = vscode.workspace.getConfiguration('NNBox')
+    let r = nnboxConfig.get<string>("gotoCommand")
+    return r == undefined ? "" : r
+}
+
 function parseTest(path: string) {
+    var nncaseRoot = getNncaseRoot()
     let data = path.split("/")
     let beginIndex = data.indexOf("tests_output")
     let testClass = data[beginIndex + 1]
     let testMethod = data[beginIndex + 2]
-    return [testClass, testMethod, data.slice(0, beginIndex).join("/")]
+    let searchRoot = data.slice(0, beginIndex).join("/")
+    return [testClass, testMethod, nncaseRoot == "" ? searchRoot : nncaseRoot]
 }
+
 
 // todo: change this
 let terminal = window.createTerminal("dotnet test")
@@ -43,7 +58,7 @@ export function registTestProvider(context: ExtensionContext, client: LanguageCl
 
     registerCommand("goto.nnbox", (param) => {
         // 很难辨别啊，都是test开头的么，如果是这样还能做，如果不是就做不了（那就不跳转，识别不了，提示message
-        let info = getPathInfo(param.uri)
+        let info = getPathInfo(param.path)
         if(info == undefined) {
             return undefined
         }
@@ -74,9 +89,8 @@ export function registTestProvider(context: ExtensionContext, client: LanguageCl
         }
 
         // search method name and goto line
-        let config = vscode.workspace.getConfiguration('NNBox')
-        let customCmd = config.get<string>("gotoCommand")
-        if(customCmd != undefined) {
+        let customCmd = getCustomCommand()
+        if(customCmd != "") {
             let cmd = customCmd.replace("$0", line.toString()).replace("$1", file)
             const cp = require('child_process')
             cp.exec(cmd);
@@ -96,7 +110,7 @@ export function registTestProvider(context: ExtensionContext, client: LanguageCl
     })
 
     registerCommand("runTest.nnbox", (param) => {
-        let info = getPathInfo(param.uri)
+        let info = getPathInfo(param.path)
         if(info == undefined) {
             return undefined
         }
