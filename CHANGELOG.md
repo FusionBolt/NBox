@@ -25,3 +25,11 @@ configuration for nncaseRootDir, kpuRootDir gotoCommand
 ### Fixed
 
 fix var hover
+
+## 0.0.4
+
+### Fixed
+
+fix bug about kpu path and config
+
+fix highlight for if else
