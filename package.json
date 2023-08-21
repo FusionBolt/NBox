@@ -81,7 +81,7 @@
           "properties": {
             "NNBox.gotoCommand": {
               "type": "string",
-              "default": "default",
+              "default": "",
               "description": "Command used for goto test source code, default use vscode\nyou can set other texteditor like command \"rider --line $0 $1\", $0 is line number, $1 is path"
             },
             "NNBox.nncaseRootDir": {

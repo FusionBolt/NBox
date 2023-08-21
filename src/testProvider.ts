@@ -41,6 +41,13 @@ function getKPURoot(defaultRoot: string) {
     return (r == "" || r == undefined) ? defaultRoot : r
 }
 
+function parseFileRoot(path: string) {
+    let data = path.split("/")
+    let beginIndex = data.indexOf("tests_output")
+    let searchRoot = data.slice(0, beginIndex).join("/")
+    return searchRoot
+}
+
 function parseTest(path: string) {
     let data = path.split("/")
     let beginIndex = data.indexOf("tests_output")
@@ -51,8 +58,34 @@ function parseTest(path: string) {
     return [testClass, testMethod, nncaseRoot]
 }
 
+function lookupTestFile(root: string, testClass: string) {
+    let fileList = lookup(path.join(root, "src", "Nncase.Tests"), s => {
+        return s == `${testClass}.cs`
+    })
 
-// todo: change this
+    // todo: always search two path
+    if(fileList.length == 0) {
+        var nncaseParent = path.dirname(root)
+        var kpuRoot = getKPURoot(path.join(nncaseParent, "k510-gnne-compiler"))
+        var kpuPath = path.join(kpuRoot, "tests")
+        let kpuFileList = lookup(kpuPath, s => {
+            return s == `${testClass}.cs`
+        })
+        if(kpuFileList.length == 0) {
+            window.showWarningMessage(`Class Not Found ${testClass}`)
+            return undefined
+        }
+        fileList = kpuFileList
+    }
+    
+    if(fileList.length > 1) {
+        // todo: need resolve
+    }
+
+    let file = fileList[0]
+    return file
+}
+
 let terminal = window.createTerminal("dotnet test")
 export function registTestProvider(context: ExtensionContext, client: LanguageClient) {
     function registerCommand(
@@ -63,40 +96,20 @@ export function registTestProvider(context: ExtensionContext, client: LanguageCl
     }
 
     registerCommand("goto.nnbox", (param) => {
-        // 很难辨别啊，都是test开头的么，如果是这样还能做，如果不是就做不了（那就不跳转，识别不了，提示message
         let info = getPathInfo(param.path)
         if(info == undefined) {
             return undefined
         }
         let [testClass, testMethod, root] = info
-        let fileList = lookup(path.join(root, "src", "Nncase.Tests"), s => {
-            return s == `${testClass}.cs`
-        })
-
-        // todo: always search two path
-        if(fileList.length == 0) {
-            var nncaseParent = path.dirname(root)
-            var kpuRoot = getKPURoot(path.join(nncaseParent, "k510-gnne-compiler"))
-            var kpuPath = path.join(kpuRoot, "tests")
-            let kpuFileList = lookup(kpuPath, s => {
-                return s == `${testClass}.cs`
-            })
-            if(kpuFileList.length == 0) {
-                window.showWarningMessage(`Class Not Found ${testClass}`)
-                return undefined
-            }
-            fileList = kpuFileList
+        let file = lookupTestFile(root, testClass)
+        if(file == undefined) {
+            return undefined
         }
-        
-        if(fileList.length > 1) {
-            // todo: need resolve
-        }
-
-        let file = fileList[0]
         var content = fs.readFileSync(file).toString()
         var lines = content.split("\n");
         // filter / find index, maybe same name
-        var methods = lines.filter(s => s.includes(`public void ${testMethod}(`)).map(x => lines.indexOf(x))
+        // todo: for Task
+        var methods = lines.filter(s => new RegExp(`^[\\s]*public.*${testMethod}.*$`).test(s)).map(x => lines.indexOf(x))
         var line = 0
         if(methods.length == 1) {
             line = methods[0]
@@ -132,8 +145,13 @@ export function registTestProvider(context: ExtensionContext, client: LanguageCl
             return undefined
         }
         let [testClass, testMethod, root] = info
+        let file = lookupTestFile(root, testClass)
+        if(file == undefined) {
+            return undefined
+        }
+        let testRoot = parseFileRoot(file)
         terminal.show()
-        let cmd = `cd ${root} && dotnet test --filter DisplayName~${testClass}.${testMethod}`
+        let cmd = `cd ${testRoot} && dotnet test --filter DisplayName~${testClass}.${testMethod}`
         terminal.sendText(cmd)
     })
 
