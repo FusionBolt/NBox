@@ -43,9 +43,19 @@ function getKPURoot(defaultRoot: string) {
 
 function parseFileRoot(path: string) {
     let data = path.split("/")
-    let beginIndex = data.indexOf("tests_output")
-    let searchRoot = data.slice(0, beginIndex).join("/")
-    return searchRoot
+    // in nncase
+    if(path.includes("tests_output")) {
+        let beginIndex = data.indexOf("tests_output")
+        let searchRoot = data.slice(0, beginIndex).join("/")
+        return searchRoot
+    } else {
+        // in kpu
+        // k510/tests/Nncase.Tests.xxx
+        let beginIndex = data.findIndex(s => s.includes("Nncase.Tests."))
+        let searchRoot = data.slice(0, beginIndex - 1).join("/")
+        return searchRoot
+    }
+
 }
 
 function parseTest(path: string) {
@@ -123,6 +133,7 @@ export function registTestProvider(context: ExtensionContext, client: LanguageCl
         if(customCmd != "") {
             let cmd = customCmd.replace("$0", line.toString()).replace("$1", file)
             const cp = require('child_process')
+            console.log(cmd)
             cp.exec(cmd);
         } else {
             workspace.openTextDocument(file).then((textDocument) => {
