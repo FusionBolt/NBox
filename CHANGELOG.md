@@ -33,3 +33,9 @@ fix var hover
 fix bug about kpu path and config
 
 fix highlight for if else
+
+## 0.0.5
+
+### Fixed
+
+fix source file not found
